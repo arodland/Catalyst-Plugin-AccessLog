@@ -12,6 +12,7 @@ after 'setup_finalize' => sub { # Init ourselves
     time_format => '%Y-%m-%dT%H:%M:%S', # ISO8601-compatible
     time_zone => 'local',
     enabled => 1,
+    hostname_lookups => 0,
     %$config
   );
   Catalyst::Utils::ensure_class_loaded( $config->{formatter_class} );

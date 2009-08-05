@@ -13,6 +13,24 @@ sub item {
   $items{$_} = $code for @$names;
 }
 
+my %whitespace_escapes = (
+  "\r" => "\\r",
+  "\n" => "\\n",
+  "\t" => "\\t",
+  "\x0b" => "\\v",
+);
+
+# Approximate the rules for safely escaping headers/etc given in the apache docs
+sub escape_string {
+  my $str = shift;
+
+  $str =~ s/(["\\])/\\$1/g;
+  $str =~ s/([\r\n\t\v])/$whitespace_escapes{$1}/eg;
+  $str =~ s/([^[:print:]])/sprintf '\x%02x', ord $1/eg;
+
+  return $str;
+}
+
 item ['a', 'remote_address'] => sub {
   return shift->request->address;
 };
@@ -26,7 +44,12 @@ item ['B', 'size'] => sub {
 };
 
 item ['h', 'remote_hostname'] => sub {
-  return shift->request->hostname;
+  my $c = shift;
+  if ($c->config->{'Plugin::AccessLog'}{hostname_lookups}) {
+    return $c->request->hostname;
+  } else {
+    return $c->request->address;
+  }
 };
 
 item 'l' => sub { # for apache compat
@@ -53,7 +76,7 @@ item ['s', 'status'] => sub {
 item ['t', 'apache_time'] => sub {
   my ($c, $arg) = @_;
   my $config = $c->config->{'Plugin::AccessLog'};
-  my $format = $arg || '%d/%b/%Y:%H:%M:%S %z'; # Apache default
+  my $format = $arg || '[%d/%b/%Y:%H:%M:%S %z]'; # Apache default
   return DateTime->now(time_zone => $config->{time_zone})
     ->strftime($format);
 };
@@ -87,7 +110,7 @@ item ['U', 'path'] => sub {
 
 item ['i', 'header'] => sub {
   my ($c, $arg) = @_;
-  return $c->req->header($arg);
+  return escape_string( $c->req->header($arg) );
 };
 
 sub get_item {
