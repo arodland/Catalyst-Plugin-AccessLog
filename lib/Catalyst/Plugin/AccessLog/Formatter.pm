@@ -23,6 +23,7 @@ my %whitespace_escapes = (
 # Approximate the rules for safely escaping headers/etc given in the apache docs
 sub escape_string {
   my $str = shift;
+  return "" unless defined $str and length $str;
 
   $str =~ s/(["\\])/\\$1/g;
   $str =~ s/([\r\n\t\v])/$whitespace_escapes{$1}/eg;
