@@ -126,7 +126,7 @@ item ['i', 'header'] => sub {
 sub get_item {
   my ($self, $c, $key, $arg) = @_;
 
-  return $key unless exists $items{$key};
+  return "[unknown format key $key]" unless exists $items{$key};
   return $items{$key}->($c, $arg);
 }
 
