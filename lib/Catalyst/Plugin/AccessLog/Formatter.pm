@@ -120,8 +120,9 @@ item ['T', 'handle_time'] => sub {
 
 item ['i', 'header_apache'] => sub {
   my ($c, $arg) = @_;
-  return "-" unless defined($arg) and length($arg);
-  return escape_string( $c->req->header($arg) );
+  my $header = $c->req->header($arg);
+  return "-" unless defined($header) and length($header);
+  return escape_string($header);
 };
 
 item 'header' => sub {
