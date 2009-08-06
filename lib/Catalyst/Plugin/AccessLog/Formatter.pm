@@ -82,7 +82,7 @@ item ['t', 'apache_time'] => sub {
     ->strftime($format);
 };
 
-item ['datetime'] => sub {
+item ['time', 'datetime'] => sub {
   my ($c, $arg) = @_;
   my $config = $c->config->{'Plugin::AccessLog'};
   my $format = $arg || $config->{time_format};
