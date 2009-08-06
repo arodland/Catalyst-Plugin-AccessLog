@@ -1,0 +1,10 @@
+0.02 2009-08-06
+  * Bug fix: literal \v in a regex isn't recognized properly. Change it
+    to \x0b.
+  * Use the stats object to get the time at the beginning of the request
+    instead of the time the log is printed.
+  * Enable stats for the application all the time, unless the user gives
+    enable_stats => 0.
+
+0.01 2009-08-05
+  * Initial release to CPAN.
