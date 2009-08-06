@@ -18,13 +18,20 @@ after 'setup_finalize' => sub { # Init ourselves
   Catalyst::Utils::ensure_class_loaded( $config->{formatter_class} );
 };
 
+sub access_log_write {
+  my $c = shift;
+  my $output = join "", @_;
+  $output .= "\n" unless $output =~ /\n\Z/;
+  print STDERR $output; # TODO more options
+}
+
 after 'finalize' => sub {
   my $c = shift;
   my $config = $c->config->{'Plugin::AccessLog'};
 
   my $formatter = $config->{formatter_class}->new();
   my $line = $formatter->format_line($c);
-  $c->log->info($line);
+  $c->access_log_write($line);
 };
 
 no Moose::Role;
@@ -39,26 +46,10 @@ Requires Catalyst 5.8 or above.
     use Catalyst (qw<
         ConfigLoader
         -Stats=1
+        AccessLog
         ... other plugins here ...
     >);
     with 'CatalystX::Logger';
-
-If you want to customize the log format globally throughout your application:
-
-    # In lib/MyApp/Controller/Root.pm
-    # or anywhere that runs on every request and with access to $c
-    sub auto :Private {
-        my ($self, $c) = @_;
-        $c->log_format(' ... your format string here ... ');
-    }
-
-If you then wanted to change the logging format in a specific controller:
-
-    # In lib/MyApp/Controller/Product.pm
-    sub default :Path {
-        my ($self, $c) = @_;
-        $c->log_format(' ... another format just for this action ');
-    }
 
 =head1 DESCRIPTION
 
