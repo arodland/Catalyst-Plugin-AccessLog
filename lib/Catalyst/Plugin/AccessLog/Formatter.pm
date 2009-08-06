@@ -67,7 +67,7 @@ item ['p', 'port'] => sub {
 
 item ['r', 'request_line'] => sub { # Mostly for apache's sake
   my $c = shift;
-  return $c->req->method . " " . $c->req->path . " " . $c->req->protocol;
+  return $c->req->method . " /" . $c->req->path . " " . $c->req->protocol;
 };
 
 item ['s', 'status'] => sub {
