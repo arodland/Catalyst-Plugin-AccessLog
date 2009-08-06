@@ -145,13 +145,13 @@ sub format_line {
       $output .= $1;
     } elsif ($format =~ /\G \%\% /cgx) { # Literal percent
       $output .= "%";
-    } elsif ($format =~ /\G \% $argument (.)/cgx) { # Short opt with argument
-      $output .= $self->get_item($c, $2, $1);
-    } elsif ($format =~ /\G \% (.)/cgx) { # Short opt
-      $output .= $self->get_item($c, $1);
     } elsif ($format =~ /\G \% $argument $longopt/cgx) { # Long opt with argument
       $output .= $self->get_item($c, $2, $1);
     } elsif ($format =~ /\G \% $longopt/cgx) { # Long opt
+      $output .= $self->get_item($c, $1);
+    } elsif ($format =~ /\G \% $argument (.)/cgx) { # Short opt with argument
+      $output .= $self->get_item($c, $2, $1);
+    } elsif ($format =~ /\G \% (.)/cgx) { # Short opt
       $output .= $self->get_item($c, $1);
     } else {
       warn "Can't happen!";
