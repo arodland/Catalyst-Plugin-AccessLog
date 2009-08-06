@@ -8,7 +8,7 @@ after 'setup_finalize' => sub { # Init ourselves
   my $c = shift;
   my $config = $c->config->{'Plugin::AccessLog'} ||= {};
   %$config = (
-    format => '%v %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
+    format => '%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
     formatter_class => 'Catalyst::Plugin::AccessLog::Formatter',
     time_format => '%Y-%m-%dT%H:%M:%S', # ISO8601-compatible
     time_zone => 'local',
