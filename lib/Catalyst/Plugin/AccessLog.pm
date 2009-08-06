@@ -129,7 +129,8 @@ C<strftime> method.
 B<Default:> local
 
 The timezone to use when printing times in access logs. This will be passed
-to L<DateTime::TimeZone>'s constructor.
+to L<DateTime::TimeZone>'s constructor. Olson timezone names, POSIX TZ
+values, and the keywords C<"local"> and C<"UTC"> are reasonable choices.
 
 =item formatter_class
 
