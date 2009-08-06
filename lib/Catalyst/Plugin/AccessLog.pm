@@ -174,4 +174,8 @@ receive C<$c> as its second argument. You can log to C<< $c->log >> with:
 Don't store C<$c> anywhere that persists after the lifetime of the coderef
 or bad things will happen to you and everyone you know.
 
+=head1 SOURCE, BUGS, ETC.
+
+L<http://github.com/arodland/Catalyst-Plugin-AccessLog>
+
 =cut

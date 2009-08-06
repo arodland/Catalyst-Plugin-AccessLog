@@ -1,5 +1,7 @@
 package Catalyst::Plugin::AccessLog::Formatter;
 
+# ABSTRACT: Log formatter for Catalyst::Plugin::AccessLog
+
 use namespace::autoclean;
 use Moose;
 use DateTime;
@@ -322,6 +324,10 @@ item ['T', 'handle_time'] => sub {
     return "-";
   }
 };
+
+=back
+
+=cut
 
 no Moose;
 
