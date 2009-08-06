@@ -223,8 +223,7 @@ item ['s', 'status'] => sub {
 
 =item %[apache_time], %t
 
-The time as the log line is being printed. Ideally, this would be the time
-the request was received, but this is currently unimplemented.
+The time that the request was received.
 
 While this escape and the C<%[time]> escape both take an optional
 C<strftime> argument, they differ in their default formats. This escape
@@ -233,18 +232,28 @@ nonetheless compatible with apache.
 
 =cut
 
+sub _request_start {
+  my ($c) = @_;
+
+  # Remove the hack when we're comfortable depending on Catalyst 5.8008.
+  my @time = $c->stats->can('created')
+    ? $c->stats->created
+    : @{ $c->stats->{tree}->getNodeValue->{t} };
+  return $time[0] + $time[1] / 1_000_000;
+}
+
 item ['t', 'apache_time'] => sub {
   my ($c, $arg) = @_;
+  return "-" unless $c->use_stats;
   my $config = $c->config->{'Plugin::AccessLog'};
   my $format = $arg || '[%d/%b/%Y:%H:%M:%S %z]'; # Apache default
-  return DateTime->now(time_zone => $config->{time_zone})
-    ->strftime($format);
+  return DateTime->from_epoch(epoch => _request_start($c), 
+    time_zone => $config->{time_zone})->strftime($format);
 };
 
 =item %[time], %[datetime]
 
-The time as the log line is being printed. Ideally, this would be the time
-the request was received, but this is currently unimplemented.
+The time that the request was received.
 
 While this escape and the C<%[apache_time]> escape both take an optional
 C<strftime> argument, they differ in their default formats. This escape
@@ -256,11 +265,12 @@ is ISO 8601.
 
 item ['time', 'datetime'] => sub {
   my ($c, $arg) = @_;
+  return "-" unless $c->use_stats;
   my $config = $c->config->{'Plugin::AccessLog'};
   my $format = $arg || $config->{time_format};
 
-  return DateTime->now(time_zone => $config->{time_zone})
-    ->strftime($format);
+  return DateTime->from_epoch(epoch => _request_start($c),
+    time_zone => $config->{time_zone})->strftime($format);
 };
 
 =item %[remote_user], %u

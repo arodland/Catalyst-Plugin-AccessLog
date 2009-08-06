@@ -13,6 +13,7 @@ after 'setup_finalize' => sub { # Init ourselves
     time_format => '%Y-%m-%dT%H:%M:%S', # ISO8601-compatible
     time_zone => 'local',
     hostname_lookups => 0,
+    enable_stats => 1,
     target => \*STDERR,
     %$config
   );
@@ -24,6 +25,16 @@ after 'setup_finalize' => sub { # Init ourselves
   }
 
   Catalyst::Utils::ensure_class_loaded( $config->{formatter_class} );
+
+};
+
+override 'use_stats' => sub {
+  my ($c) = @_;
+  if ($c->config->{'Plugin::AccessLog'}{enable_stats}) {
+    return 1;
+  } else {
+    return super;
+  }
 };
 
 sub access_log_write {
@@ -83,7 +94,7 @@ Requires Catalyst 5.8 or above.
 This plugin isn't for "debug" logging. Instead it enables you to create
 "access logs" from within a Catalyst application instead of requiring a
 webserver to do it for you. It will work even with Catalyst debug logging
-turned off (but see NOTES below).
+turned off (but see C<enable_stats> below).
 
 =head1 CONFIGURATION
 
@@ -149,18 +160,20 @@ C<%[remote_hostname]> escape will resolve the client IP address using
 reverse DNS. This is generally not recommended for reasons of performance
 and security. Equivalent to the Apache option C<HostnameLookups>.
 
+=item enable_stats
+
+B<Default:> B<true>
+
+C<Catalyst::Plugin::AccessLog> works without regard to Catalyst's debug
+logging option. However, the time-related escapes are only available if the
+C<Catalyst::Stats> statistics collection is enabled, and by default stats are
+tied to the value of the debug flag. If this option is set, stats will be
+enabled for the application regardless of the C<-Stats> or C<-Debug> flags, or
+the C<MYAPP_STATS> or C<MYAPP_DEBUG> environment variables.
+
 =back
 
 =head1 NOTES
-
-=head2 Request time statstics
-
-C<Catalyst::Plugin::AccessLog> works without regard to Catalyst's debug
-logging option. However, the C<%T> / C<%[handle_time]> escape is only
-available if Catalyst stats are enabled. By default, statistics are only
-collected in Catalyst if debugging is active. If you want to use the C<%T>
-escape you can enable stats by adding C<-Stats> to your C<use Catalyst>
-line or by setting the C<MYAPP_STATS> environment variable to 1.
 
 =head2 Logging to C<< $c->log >>
 
