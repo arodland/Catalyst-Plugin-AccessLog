@@ -2,6 +2,7 @@ package Catalyst::Plugin::AccessLog;
 
 use namespace::autoclean;
 use Moose::Role;
+use Scalar::Util qw(reftype blessed);
 
 after 'setup_finalize' => sub { # Init ourselves
   my $c = shift;
@@ -13,8 +14,16 @@ after 'setup_finalize' => sub { # Init ourselves
     time_zone => 'local',
     enabled => 1,
     hostname_lookups => 0,
+    target => \*STDERR,
     %$config
   );
+
+  if (!ref $config->{target}) {
+    open my $output, '>>', $config->{target} or die qq[Error opening "$config->{target}" for log output];
+    select((select($output), $|=1)[0]);
+    $config->{target} = $output;
+  }
+
   Catalyst::Utils::ensure_class_loaded( $config->{formatter_class} );
 };
 
@@ -22,7 +31,17 @@ sub access_log_write {
   my $c = shift;
   my $output = join "", @_;
   $output .= "\n" unless $output =~ /\n\Z/;
-  print STDERR $output; # TODO more options
+
+  my $target = $c->config->{'Plugin::AccessLog'}{target};
+  if (reftype($target) eq 'GLOB' or blessed($target) && $target->isa('IO::Handle')) {
+    print $target $output;
+  } elsif (reftype($target) eq 'CODE') {
+    $target->($output, $c);
+  } elsif ($target->can('info')) { # Logger object
+    $target->info($output);
+  } else {
+    warn "Don't know how to log to config->{'Plugin::AccessLog'}{target}";
+  }
 }
 
 after 'finalize' => sub {
