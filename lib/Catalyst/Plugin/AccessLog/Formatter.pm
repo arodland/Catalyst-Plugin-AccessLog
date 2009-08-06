@@ -109,6 +109,15 @@ item ['U', 'path'] => sub {
   return '/' . shift->request->path;
 };
 
+item ['T', 'handle_time'] => sub {
+  my $c = shift;
+  if ($c->use_stats) {
+    return sprintf "%f", $c->stats->elapsed;
+  } else {
+    return "-";
+  }
+};
+
 item ['i', 'header'] => sub {
   my ($c, $arg) = @_;
   return escape_string( $c->req->header($arg) );
