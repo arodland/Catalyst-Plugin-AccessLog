@@ -28,7 +28,7 @@ sub escape_string {
   return "" unless defined $str and length $str;
 
   $str =~ s/(["\\])/\\$1/g;
-  $str =~ s/([\r\n\t\v])/$whitespace_escapes{$1}/eg;
+  $str =~ s/([\r\n\t\x0b])/$whitespace_escapes{$1}/eg;
   $str =~ s/([^[:print:]])/sprintf '\x%02x', ord $1/eg;
 
   return $str;
