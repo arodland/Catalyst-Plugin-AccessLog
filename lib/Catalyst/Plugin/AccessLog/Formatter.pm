@@ -335,6 +335,16 @@ item ['T', 'handle_time'] => sub {
   }
 };
 
+=item %[action]
+
+The private path of the Catalyst action that handled the request.
+
+=cut
+
+item ['action'] => sub {
+  return shift->action->reverse;
+};
+
 =back
 
 =cut
