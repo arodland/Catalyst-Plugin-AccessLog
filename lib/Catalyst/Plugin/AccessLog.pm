@@ -6,16 +6,18 @@ use Scalar::Util qw(reftype blessed);
 
 after 'setup_finalize' => sub { # Init ourselves
   my $c = shift;
-  my $config = $c->config->{'Plugin::AccessLog'} ||= {};
-  %$config = (
-    format => '%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
-    formatter_class => 'Catalyst::Plugin::AccessLog::Formatter',
-    time_format => '%Y-%m-%dT%H:%M:%S', # ISO8601-compatible
-    time_zone => 'local',
+  my $default_config = {
+    formatter => {
+      class => 'Catalyst::Plugin::AccessLog::Formatter',
+    },
     hostname_lookups => 0,
     enable_stats => 1,
     target => \*STDERR,
-    %$config
+  };
+
+  my $config = $c->config->{'Plugin::AccessLog'} = Catalyst::Utils::merge_hashes(
+    $default_config,
+    $c->config->{'Plugin::AccessLog'}
   );
 
   if (!ref $config->{target}) {
@@ -24,7 +26,7 @@ after 'setup_finalize' => sub { # Init ourselves
     $config->{target} = $output;
   }
 
-  Catalyst::Utils::ensure_class_loaded( $config->{formatter_class} );
+  Catalyst::Utils::ensure_class_loaded( $config->{formatter}{class} );
 
 };
 
@@ -58,7 +60,10 @@ after 'finalize' => sub {
   my $c = shift;
   my $config = $c->config->{'Plugin::AccessLog'};
 
-  my $formatter = $config->{formatter_class}->new();
+  my %formatter_opts = %{ $config->{formatter} };
+  my $formatter_class = delete $formatter_opts{class};
+  my $formatter = $formatter_class->new( %formatter_opts );
+
   my $line = $formatter->format_line($c);
   $c->access_log_write($line);
 };
@@ -81,9 +86,11 @@ Requires Catalyst 5.8 or above.
 
     __PACKAGE__->config(
         'Plugin::AccessLog' => {
-            format => '%[time] %[remote_address] %[path] %[status] %[size]',
-            time_format => '%c',
-            time_zone => 'America/Chicago',
+            formatter => {
+              format => '%[time] %[remote_address] %[path] %[status] %[size]',
+              time_format => '%c',
+              time_zone => 'America/Chicago',
+            },
         }
     );
 
@@ -117,48 +124,14 @@ with each line of logging output. If it's an unblessed scalar it will be
 interpreted as a filehandle and the plugin will try to open it for append
 and write lines to it.
 
-=item format
+=item formatter
 
-B<Default:> C<'%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"'> (Apache
-C<common> log format).
+B<Default:> C<< { class => "Catalyst::Plugin::AccessLog::Formatter" } >>
 
-The format string for each line of output. You can use Apache C<LogFormat>
-strings, with a reasonably good level of compatibility, or you can use a
-slightly more readable format. The log format is documented in detail in
-L<Catalyst::Plugin::AccessLog::Formatter>.
-
-=item time_format
-
-B<Default:> C<'%Y-%m-%dT%H:%M:%S'> (ISO 8601)
-
-The default time format for the C<%t> / C<%[time]> escape. This is a
-C<strftime> format string, which will be provided to L<DateTime>'s
-C<strftime> method.
-
-=item time_zone
-
-B<Default:> local
-
-The timezone to use when printing times in access logs. This will be passed
-to L<DateTime::TimeZone>'s constructor. Olson timezone names, POSIX TZ
-values, and the keywords C<"local"> and C<"UTC"> are reasonable choices.
-
-=item formatter_class
-
-B<Default:> C<Catalyst::Plugin::AccessLog::Formatter>
-
-In case you want to do something completely different you may provide your
-own formatter class that implements the C<format_line> method and provide
-its name here.
-
-=item hostname_lookups
-
-B<Default:> B<false>
-
-If this option is set to a true value, then the C<%h> /
-C<%[remote_hostname]> escape will resolve the client IP address using
-reverse DNS. This is generally not recommended for reasons of performance
-and security. Equivalent to the Apache option C<HostnameLookups>.
+The formatter to use. Defaults to the Formatter class included in this
+distribution. This option must be a hashref. The C<class> option is taken as
+the name of the class to use as the formatter; all other keys are passed to
+that class's constructor.
 
 =item enable_stats
 

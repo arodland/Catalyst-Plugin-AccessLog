@@ -38,12 +38,12 @@ sub get_item {
   my ($self, $c, $key, $arg) = @_;
 
   return "[unknown format key $key]" unless exists $items{$key};
-  return $items{$key}->($c, $arg);
+  return $items{$key}->($self, $c, $arg);
 }
 
 sub format_line {
   my ($self, $c) = @_;
-  my $format = $c->config->{'Plugin::AccessLog'}{format};
+  my $format = $self->format;
   my $output = "";
 
   while (1) {
@@ -98,6 +98,75 @@ C<%{User-agent}[header]> to get the value of the C<User-agent> header.
 A literal percent-sign can be produced in the output using the escape
 sequence C<%%>.
 
+=head2 Configuration
+
+=over 4
+
+=item format
+
+B<Default:> C<'%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"'> (Apache
+C<common> log format).
+
+The format string for each line of output. You can use Apache C<LogFormat>
+strings, with a reasonably good level of compatibility, or you can use a
+slightly more readable format. The log format is documented in detail in
+L<Catalyst::Plugin::AccessLog::Formatter>.
+
+=cut
+
+has 'format' => (
+  is => 'rw',
+  default => '%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
+);
+
+=item time_format
+
+B<Default:> C<'%Y-%m-%dT%H:%M:%S'> (ISO 8601)
+
+The default time format for the C<%t> / C<%[time]> escape. This is a
+C<strftime> format string, which will be provided to L<DateTime>'s
+C<strftime> method.
+
+=cut
+
+has 'time_format' => (
+  is => 'rw',
+  default => '%Y-%m-%dT%H:%M:%S',
+);
+
+=item time_zone
+
+B<Default:> local
+
+The timezone to use when printing times in access logs. This will be passed
+to L<DateTime::TimeZone>'s constructor. Olson timezone names, POSIX TZ
+values, and the keywords C<"local"> and C<"UTC"> are reasonable choices.
+
+=cut
+
+has 'time_zone' => (
+  is => 'rw',
+  default => 'local',
+);
+
+=item hostname_lookups
+
+B<Default:> B<false>
+
+If this option is set to a true value, then the C<%h> /
+C<%[remote_hostname]> escape will resolve the client IP address using
+reverse DNS. This is generally not recommended for reasons of performance
+and security. Equivalent to the Apache option C<HostnameLookups>.
+
+=cut
+
+has 'hostname_lookups' => (
+  is => 'rw',
+  default => 0,
+);
+
+=back
+
 =head2 Escapes
 
 =over 4
@@ -109,7 +178,7 @@ The IP address of the remote client.
 =cut
 
 item ['a', 'remote_address'] => sub {
-  return shift->request->address;
+  return $_[1]->request->address;
 };
 
 =item %[clf_size], %b
@@ -120,7 +189,7 @@ produces a dash C<-> instead of 0. This is compatible with CLF.
 =cut
 
 item ['b', 'clf_size'] => sub {
-  return shift->response->content_length || "-";
+  return $_[1]->response->content_length || "-";
 };
 
 =item %[size], %B
@@ -130,7 +199,7 @@ The size of the response content in bytes. Always numeric, even for 0.
 =cut
 
 item ['B', 'size'] => sub {
-  return shift->response->content_length;
+  return $_[1]->response->content_length;
 };
 
 =item %[remote_host], %h
@@ -142,8 +211,8 @@ C<%[remote_address]>.
 =cut
 
 item ['h', 'remote_host'] => sub {
-  my $c = shift;
-  if ($c->config->{'Plugin::AccessLog'}{hostname_lookups}) {
+  my ($self, $c) = @_;
+  if ($self->hostname_lookups) {
     return $c->request->hostname;
   } else {
     return $c->request->address;
@@ -159,7 +228,7 @@ C<User-agent> request header.
 =cut
 
 item ['i', 'header'] => sub {
-  my ($c, $arg) = @_;
+  my ($self, $c, $arg) = @_;
   my $header = $c->req->header($arg);
   return "-" unless defined($header);
   return escape_string($header);
@@ -185,7 +254,7 @@ The request method (e.g. GET, POST).
 =cut
 
 item ['m', 'method'] => sub {
-  return shift->request->method;
+  return $_[1]->request->method;
 };
 
 =item %[port], %p
@@ -197,7 +266,7 @@ to Catalyst.
 =cut
 
 item ['p', 'port'] => sub {
-  return shift->req->base->port;
+  return $_[1]->req->base->port;
 };
 
 =item %[request_line], %r
@@ -207,7 +276,7 @@ The first line of the HTTP request, e.g. C<"GET / HTTP/1.0">.
 =cut
 
 item ['r', 'request_line'] => sub { # Mostly for apache's sake
-  my $c = shift;
+  my ($self, $c) = @_;
   return $c->req->method . " /" . $c->req->path . " " . $c->req->protocol;
 };
 
@@ -218,7 +287,7 @@ The HTTP status of the response, e.g. 200 or 404.
 =cut
 
 item ['s', 'status'] => sub {
-  return shift->response->status;
+  return $_[1]->response->status;
 };
 
 =item %[apache_time], %t
@@ -243,12 +312,11 @@ sub _request_start {
 }
 
 item ['t', 'apache_time'] => sub {
-  my ($c, $arg) = @_;
+  my ($self, $c, $arg) = @_;
   return "-" unless $c->use_stats;
-  my $config = $c->config->{'Plugin::AccessLog'};
   my $format = $arg || '[%d/%b/%Y:%H:%M:%S %z]'; # Apache default
   return DateTime->from_epoch(epoch => _request_start($c), 
-    time_zone => $config->{time_zone})->strftime($format);
+    time_zone => $self->time_zone)->strftime($format);
 };
 
 =item %[time], %[datetime]
@@ -257,20 +325,18 @@ The time that the request was received.
 
 While this escape and the C<%[apache_time]> escape both take an optional
 C<strftime> argument, they differ in their default formats. This escape
-defaults to the C<time_format> config option provided to
-C<Catalyst::Plugin::AccessLog>. If that option is not provided, the default
-is ISO 8601.
+defaults to the C<time_format> config option passed to the constructor.
+If that option is not provided, the default is ISO 8601.
 
 =cut
 
 item ['time', 'datetime'] => sub {
-  my ($c, $arg) = @_;
+  my ($self, $c, $arg) = @_;
   return "-" unless $c->use_stats;
-  my $config = $c->config->{'Plugin::AccessLog'};
-  my $format = $arg || $config->{time_format};
+  my $format = $arg || $self->time_format;
 
   return DateTime->from_epoch(epoch => _request_start($c),
-    time_zone => $config->{time_zone})->strftime($format);
+    time_zone => $self->time_zone)->strftime($format);
 };
 
 =item %[remote_user], %u
@@ -281,7 +347,7 @@ authentication methods. Returns a dash C<-> if no such thing exists.
 =cut
 
 item ['u', 'remote_user'] => sub {
-  return shift->request->remote_user || '-';
+  return $_[1]->request->remote_user || '-';
 };
 
 =item %[host_port], %v, %V
@@ -293,7 +359,7 @@ unavailable to Catalyst.
 =cut
 
 item ['V', 'v', 'host_port'] => sub {
-  return shift->request->base->host_port;
+  return $_[1]->request->base->host_port;
 };
 
 =item %[hostname]
@@ -303,7 +369,7 @@ The hostname of the request URI.
 =cut
 
 item 'hostname' => sub {
-  return shift->request->base->host;
+  return $_[1]->request->base->host;
 };
 
 =item %[path], %U
@@ -316,7 +382,7 @@ slash).
 # Possibly improvement: use uri_for to absolutize this with base, and then
 # take the path component off of that...
 item ['U', 'path'] => sub {
-  return '/' . shift->request->path;
+  return '/' . $_[1]->request->path;
 };
 
 =item %[handle_time], %T
@@ -327,7 +393,7 @@ object. Returns a dash C<-> if stats are unavailable.
 =cut
 
 item ['T', 'handle_time'] => sub {
-  my $c = shift;
+  my ($self, $c) = @_;
   if ($c->use_stats) {
     return sprintf "%f", $c->stats->elapsed;
   } else {
@@ -342,7 +408,7 @@ The private path of the Catalyst action that handled the request.
 =cut
 
 item 'action' => sub {
-  return shift->action->reverse;
+  return $_[1]->action->reverse;
 };
 
 =item %[sessionid]
@@ -352,7 +418,7 @@ The session ID, if there is one, otherwise "-".
 =cut
 
 item 'sessionid' => sub {
-  my $c = shift;
+  my ($self, $c) = @_;
   return "-" unless $c->can('sessionid') && defined $c->sessionid;
   return $c->sessionid;
 };
@@ -364,7 +430,7 @@ The user ID, if Authentication is enabled and a user exists, otherwise "-"
 =cut
 
 item 'userid' => sub {
-  my $c = shift;
+  my ($self, $c) = @_;
   return "-" unless $c->can('user');
   return "-" unless $c->user_exists && defined $c->user->id;
   return $c->user->id;
