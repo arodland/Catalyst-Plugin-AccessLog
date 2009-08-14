@@ -131,7 +131,8 @@ B<Default:> C<< { class => "Catalyst::Plugin::AccessLog::Formatter" } >>
 The formatter to use. Defaults to the Formatter class included in this
 distribution. This option must be a hashref. The C<class> option is taken as
 the name of the class to use as the formatter; all other keys are passed to
-that class's constructor.
+that class's constructor. See L<Catalyst::Plugin::AccessLog::Formatter> for
+the keys supported by that module.
 
 =item enable_stats
 

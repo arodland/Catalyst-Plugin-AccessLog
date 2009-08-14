@@ -100,6 +100,11 @@ sequence C<%%>.
 
 =head2 Configuration
 
+The following are optional arguments passed to
+C<< Catalyst::Plugin::AccessLog::Formatter->new >>. Ordinarily these values
+will be provided by L<Catalyst::Plugin::AccessLog> from its C<formatter>
+config hash.
+
 =over 4
 
 =item format
