@@ -465,6 +465,4 @@ item 'pid' => sub {
 
 =cut
 
-no Moose;
-
 1;

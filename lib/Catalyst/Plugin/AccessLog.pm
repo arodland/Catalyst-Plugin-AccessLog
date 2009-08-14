@@ -3,6 +3,7 @@ package Catalyst::Plugin::AccessLog;
 use namespace::autoclean;
 use Moose::Role;
 use Scalar::Util qw(reftype blessed);
+use Catalyst::Utils;
 
 after 'setup_finalize' => sub { # Init ourselves
   my $c = shift;
@@ -67,8 +68,6 @@ after 'finalize' => sub {
   my $line = $formatter->format_line($c);
   $c->access_log_write($line);
 };
-
-no Moose::Role;
 
 1;
 
