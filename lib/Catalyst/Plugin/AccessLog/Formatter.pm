@@ -341,8 +341,53 @@ The private path of the Catalyst action that handled the request.
 
 =cut
 
-item ['action'] => sub {
+item 'action' => sub {
   return shift->action->reverse;
+};
+
+=item %[sessionid]
+
+The session ID, if there is one, otherwise "-".
+
+=cut
+
+item 'sessionid' => sub {
+  my $c = shift;
+  return "-" unless $c->can('sessionid') && defined $c->sessionid;
+  return $c->sessionid;
+};
+
+=item %[userid]
+
+The user ID, if Authentication is enabled and a user exists, otherwise "-"
+
+=cut
+
+item 'userid' => sub {
+  my $c = shift;
+  return "-" unless $c->can('user');
+  return "-" unless $c->user_exists && defined $c->user->id;
+  return $c->user->id;
+};
+
+=item %[request_count]
+
+The request count for the current process, as displayed in debug info.
+
+=cut
+
+item 'request_count' => sub {
+  $Catalyst::COUNT;
+};
+
+=item %[pid]
+
+The process ID of the instance handling the request.
+
+=cut
+
+item 'pid' => sub {
+  $$
 };
 
 =back
