@@ -1,6 +1,10 @@
 Changes for Catalyst::Plugin::AccessLog
 
+1.01 2009-12-18
   * Tidied code.
+  * Add support for query strings to the formatter. 
+  * Fix Catalyst version dependency; we mistakenly required 5.8004 instead
+    of the correct 5.80004.
 
 1.00 2009-08-14
   * The interaction between the plugin and the formatter has changed,
