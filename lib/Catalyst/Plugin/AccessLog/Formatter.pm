@@ -274,6 +274,22 @@ item ['p', 'port'] => sub {
   return $_[1]->req->base->port;
 };
 
+=item %[query], %q
+
+The query string (beginning with a ? if there is a query string, otherwise
+an empty string).
+
+=cut
+
+item ['q', 'query' ] => sub {
+  my $qstring = $_[1]->req->uri->query;
+  if (defined $qstring && length $qstring) {
+    return "?$qstring";
+  } else {
+    return "";
+  }
+};
+
 =item %[request_line], %r
 
 The first line of the HTTP request, e.g. C<"GET / HTTP/1.0">.
@@ -282,7 +298,14 @@ The first line of the HTTP request, e.g. C<"GET / HTTP/1.0">.
 
 item ['r', 'request_line'] => sub { # Mostly for apache's sake
   my ($self, $c) = @_;
-  return $c->req->method . " /" . $c->req->path . " " . $c->req->protocol;
+  my $path = $c->req->path;
+  my $query = $c->req->uri->query;
+  if (defined $query && length $query) {
+    $query = "?$query";
+  } else {
+    $query = "";
+  }
+  return $c->req->method . " /${path}${query} " . $c->req->protocol;
 };
 
 =item %[status], %s

@@ -4,7 +4,7 @@ use warnings;
 
 use lib 't/lib';
 
-use Test::More tests => 36;
+use Test::More tests => 38;
 use TestApp;
 use MockStats;
 use MockUser;
@@ -19,7 +19,7 @@ $c->req(
     method => 'GET',
     protocol => 'HTTP/1.1',
     secure => 0,
-    uri => URI->new("http://testapp/foo/bar"),
+    uri => URI->new("http://testapp/foo/bar?answer=42"),
     address => '127.0.0.1',
   )
 );
@@ -74,8 +74,11 @@ is formatted '%m', 'GET', 'method short';
 is formatted '%[port]', 80, 'port';
 is formatted '%p', 80, 'port short';
 
-is formatted '%[request_line]', 'GET /foo/bar HTTP/1.1', 'request_line';
-is formatted '%r', 'GET /foo/bar HTTP/1.1', 'request_line short';
+is formatted '%[query]', '?answer=42', 'query';
+is formatted '%q', '?answer=42', 'query short';
+
+is formatted '%[request_line]', 'GET /foo/bar?answer=42 HTTP/1.1', 'request_line';
+is formatted '%r', 'GET /foo/bar?answer=42 HTTP/1.1', 'request_line short';
 
 is formatted '%[status]', 200, 'status';
 is formatted '%s', 200, 'status short';
