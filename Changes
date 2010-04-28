@@ -1,5 +1,10 @@
 Changes for Catalyst::Plugin::AccessLog
 
+1.02 2010-04-28
+  * Updated dist.ini for Dist::Zilla v2
+  * Require Catalyst 5.80008 and remove the hack to support 5.80003..7
+  * Repository in META (thanks chorny).
+
 1.01 2009-12-18
   * Tidied code.
   * Add support for query strings to the formatter. 
