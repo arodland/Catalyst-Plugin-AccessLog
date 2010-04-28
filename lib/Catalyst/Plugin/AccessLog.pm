@@ -1,4 +1,5 @@
 package Catalyst::Plugin::AccessLog;
+# ABSTRACT: Request logging from within Catalyst
 
 use namespace::autoclean;
 use Moose::Role;
