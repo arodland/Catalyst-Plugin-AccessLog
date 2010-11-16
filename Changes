@@ -1,5 +1,8 @@
 Changes for Catalyst::Plugin::AccessLog
 
+1.03 2010-11-15
+  * Documentation fix.
+
 1.02 2010-04-28
   * Updated dist.ini for Dist::Zilla v2
   * Require Catalyst 5.80008 and remove the hack to support 5.80003..7
