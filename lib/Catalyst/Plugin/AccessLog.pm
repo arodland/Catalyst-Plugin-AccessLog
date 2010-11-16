@@ -121,7 +121,7 @@ it. If C<target> is an object with an C<info> method it's assumed to be a
 logging object (e.g. L<Log::Dispatch> or L<Log::Log4perl>) and lines will be
 passed to the C<info> method. If it's a C<CODE> ref then it will be called
 with each line of logging output. If it's an unblessed scalar it will be
-interpreted as a filehandle and the plugin will try to open it for append
+interpreted as a filename and the plugin will try to open it for append
 and write lines to it.
 
 =item formatter
