@@ -4,7 +4,7 @@ use warnings;
 
 use lib 't/lib';
 
-use Test::More tests => 38;
+use Test::More tests => 40;
 use TestApp;
 use MockStats;
 use MockUser;
@@ -82,6 +82,8 @@ is formatted '%r', 'GET /foo/bar?answer=42 HTTP/1.1', 'request_line short';
 
 is formatted '%[status]', 200, 'status';
 is formatted '%s', 200, 'status short';
+is formatted '%>s', 200, 'status with >';
+is formatted '%<s', 200, 'status with <';
 
 is formatted '%[apache_time]', '[01/Jan/1970:01:02:03 +0000]', 'apache_time';
 is formatted '%t', '[01/Jan/1970:01:02:03 +0000]', 'apache_time short';
