@@ -72,6 +72,13 @@ after 'finalize' => sub {
 
 1;
 
+=head1 DEPRECATION NOTICE
+
+This module doesn't work well on Catalyst 5.9 or above, and no longer
+passes its tests. Repairing it isn't possible. Using this module for
+anything new isn't recommended; use L<Plack::Middleware::AccessLog> or log
+at the proxy layer. It remains online in support of existing users.
+
 =head1 SYNOPSIS
 
 Requires Catalyst 5.8 or above.
