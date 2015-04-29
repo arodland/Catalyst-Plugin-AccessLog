@@ -1,6 +1,8 @@
 package Catalyst::Plugin::AccessLog::Formatter;
 
 # ABSTRACT: Log formatter for Catalyst::Plugin::AccessLog
+# VERSION
+# AUTHORITY
 
 use namespace::autoclean;
 use Moose;
